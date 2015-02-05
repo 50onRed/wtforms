@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from wtforms.form import BaseForm, Form
 from wtforms.meta import DefaultMeta
-from wtforms.fields import TextField, IntegerField
+from wtforms.fields import TextField, IntegerField, StringField
 from wtforms.validators import ValidationError
 from tests.common import DummyPostData
 
@@ -267,3 +267,32 @@ class MetaTest(TestCase):
             self.G.Meta,
             DefaultMeta
         ))
+
+
+class FormdataKwargsTest(TestCase):
+
+    def get_form(self, **kwargs):
+
+        def validate_formdata_test(form, field):
+            if field.data != 'foobar':
+                raise ValidationError('error')
+
+        def validate_kwargs_test(form, field):
+            if field.data != 'batz':
+                raise ValidationError('error')
+
+        return BaseForm({'test_fd': StringField(validators=[validate_formdata_test]),
+                         'test_kwargs': StringField(validators=[validate_kwargs_test]),
+                         'other_prop': StringField()}, **kwargs)
+
+    def test_populate_obj_partial_with_formdata(self):
+        m = type(str('Model'), (object, ), {})
+        m.test_fd = 'cat'
+        m.test_kwargs = 'dog'
+        m.other_prop = 'mouse'
+        form = self.get_form()
+        form.process(DummyPostData({'test_fd': 'foobar'}), test_kwargs='batz')
+        form.populate_obj(m, partial=True)
+        self.assertEqual(m.test_fd, 'foobar')
+        self.assertEqual(m.test_kwargs, 'batz')
+        self.assertEqual(m.other_prop, 'mouse')
