@@ -97,7 +97,7 @@ class BaseForm(object):
                as a field will be overridden. Use with caution.
         """
         for name, field in iteritems(self._fields):
-            if not partial or (partial and name in self._formkeys):
+            if not partial or (name in self._formkeys):
                 field.populate_obj(obj, name)
 
     def process(self, formdata=None, obj=None, data=None, **kwargs):
